@@ -2,7 +2,7 @@
 
 **English** · [中文](#中文)
 
-A local web dashboard for **Antigravity Cascade sessions** — see what every agent session is doing right now, follow its execution timeline, and send new instructions from your desktop or phone.
+**Use Antigravity on your computer — from your phone, or from another computer.** AG Deck is a local web dashboard that works over your LAN or a Tailscale tailnet: follow every Cascade session live, and send new instructions from wherever you are.
 
 [![CI](https://github.com/Raines-01/ag-deck/actions/workflows/ci.yml/badge.svg)](https://github.com/Raines-01/ag-deck/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](pyproject.toml)
 
@@ -241,7 +241,7 @@ Antigravity is a trademark of Google LLC. This project is unofficial and is not 
 
 [English](#ag-deck) · **中文**
 
-一个跑在本机的 **Antigravity Cascade 看板**：看清每个会话此刻在做什么、做到哪一步，并在电脑或手机上直接下发新指令。
+**在手机或另一台电脑上，使用你这台机器上的 Antigravity。** AG Deck 是一块跑在本机的 Web 看板，通过局域网或 Tailscale 访问：实时看清每个 Cascade 会话在做什么，并随手下发新指令。
 
 > 非官方项目，与 Google 无关联。"Antigravity" 是 Google LLC 的商标。
 

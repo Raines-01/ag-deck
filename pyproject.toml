@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ag-deck"
 version = "1.0.0"
-description = "A local web dashboard for Antigravity Cascade sessions — watch progress, send instructions, control from your phone."
+description = "Use Antigravity on your computer from your phone or another machine, over your LAN or Tailscale."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }

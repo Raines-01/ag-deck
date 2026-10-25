@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""AG Deck — local web dashboard for Antigravity Cascade sessions.
+"""AG Deck — use Antigravity on your computer from your phone or another machine.
 
 Serves one single-page UI plus a small JSON API on top of the language server
 that Antigravity runs locally. Security model:
@@ -754,7 +754,7 @@ def _print_status(port: int, host: str) -> None:
 def main(argv: Optional[List[str]] = None) -> None:
     parser = argparse.ArgumentParser(
         prog="agdeck",
-        description="AG Deck — a local dashboard for Antigravity Cascade sessions.",
+        description="AG Deck — use Antigravity on your computer from your phone or another machine.",
         epilog="https://github.com/  ·  MIT License  ·  unofficial project",
     )
     parser.add_argument("--version", action="version", version=f"{APP_NAME} {__version__}")

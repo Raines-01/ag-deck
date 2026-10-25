@@ -1,7 +1,7 @@
 {
   "name": "AG Deck — Antigravity 控制台",
   "short_name": "AG Deck",
-  "description": "Remote dashboard for Antigravity Cascade sessions / 远程查看和指挥 Antigravity 的 agent 会话",
+  "description": "Use Antigravity on your computer from your phone or another machine / 在手机或另一台电脑上使用本机的 Antigravity",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
