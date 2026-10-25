@@ -189,7 +189,7 @@ agdeck net                    # URLs a phone can use
 |---|---|
 | `没有找到 ... language_server 进程` | Antigravity is not running, or its agent panel was never opened. Start it, then wait a few seconds — AG Deck reconnects automatically. |
 | Found the process but RPC does not answer | Restart Antigravity. On macOS, check that you did not deny local network access. |
-| Phone cannot connect | Same Wi-Fi? Guest networks often isolate clients. Tailscale: both devices online and logged into the same tailnet. |
+| Phone cannot connect | Same Wi-Fi? Guest and campus networks often isolate clients, so two devices on the same SSID still cannot reach each other. From the phone, open the gateway address: if the gateway loads but the computer does not, isolation is confirmed. Use Tailscale, the phone's hotspot, or USB (`adb reverse tcp:8848 tcp:8848`). |
 | Port already in use | AG Deck automatically moves to the next free port; check the printed URL. |
 | Windows firewall prompt | Allow *private networks* for Python. |
 | `tailscale up` hangs behind a proxy | On Linux with systemd, `sudo bash packaging/tailscale-login.sh` routes tailscaled's control traffic through a local proxy (`--off` reverts). |
@@ -440,7 +440,7 @@ agdeck net                    # 手机能用的地址
 |---|---|
 | 提示找不到 `language_server` 进程 | Antigravity 没开，或 agent 面板从没打开过。启动后等几秒，AG Deck 会自动重连。 |
 | 找到进程但 RPC 无响应 | 重启 Antigravity；macOS 上检查是否拒绝了"本地网络"权限。 |
-| 手机连不上 | 同一 Wi-Fi？访客网络常做客户端隔离。走 Tailscale 时确认两端都在线且同一 tailnet。 |
+| 手机连不上 | 同一 Wi-Fi 也可能被 AP 隔离：访客网络和校园网很常见，两台设备在同一个 SSID 下仍然互相不可见。在手机上打开网关地址，网关能开、电脑打不开，就说明被隔离了。改用 Tailscale、手机热点，或 USB（`adb reverse tcp:8848 tcp:8848`）。 |
 | 端口被占用 | 会自动换端口，看终端打印的地址。 |
 | Windows 防火墙弹窗 | 允许"专用网络"上的 Python。 |
 | `tailscale up` 一直卡住（Clash TUN） | Linux + systemd 下执行 `sudo bash packaging/tailscale-login.sh`，让 tailscaled 的控制面流量走本机代理；`--off` 可恢复直连。 |
