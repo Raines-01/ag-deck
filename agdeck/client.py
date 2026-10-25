@@ -95,9 +95,13 @@ def list_sessions(include_archived: bool = True, activity: bool = False) -> List
             if not s["running"]:
                 continue
             try:
-                steps = get_steps(s["id"], max(0, s["stepCount"] - 4), timeout=8)
+                offset = max(0, s["stepCount"] - 6)
+                steps = get_steps(s["id"], offset, timeout=8)
                 if steps:
-                    s["activity"] = describe(normalize_step(steps[-1], 0))
+                    events = normalize_steps(steps, offset)
+                    s["activity"] = build_progress(events, s["status"], s["stepCount"])["currentAction"]
+                else:
+                    s["activity"] = "正在工作…"
             except Exception:
                 s["activity"] = "正在工作…"
 
@@ -254,12 +258,26 @@ def _elapsed_ms(meta: Dict[str, Any]) -> int:
     return 0
 
 
+#: 一轮结束后 Antigravity 的 summary 状态还会滞后几秒才翻成 IDLE。
+#: 超过这个宽限期仍是 RUNNING，就说明真有后台任务在跑。
+TURN_END_GRACE = 8.0
+
+
+def _seconds_since(value: Any) -> Optional[float]:
+    parsed = _parse_ts(value)
+    if parsed is None:
+        return None
+    now = datetime.datetime.utcnow()
+    return max(0.0, (now - parsed).total_seconds())
+
+
 def normalize_step(step: Dict[str, Any], index: int) -> Dict[str, Any]:
     stype = step.get("type") or ""
     meta = step.get("metadata") or {}
     usage = meta.get("modelUsage") or {}
     payload = _payload(step, stype)
 
+    task = step.get("taskDetails") or {}
     ev: Dict[str, Any] = {
         "index": index,
         "type": stype,
@@ -274,6 +292,12 @@ def normalize_step(step: Dict[str, Any], index: int) -> Dict[str, Any]:
         "tokensOut": int(usage.get("outputTokens") or 0),
         "ms": _elapsed_ms(meta),
     }
+    if task:
+        # 后台任务：step 本身已经 DONE，但任务仍在跑（日志/进程由 IDE 管）
+        ev["task"] = {
+            "id": task.get("id", ""),
+            "title": task.get("title") or (task.get("description") or "")[:80],
+        }
 
     if stype == "CORTEX_STEP_TYPE_USER_INPUT":
         items = payload.get("items") or []
@@ -496,7 +520,14 @@ def build_progress(events: List[Dict[str, Any]], status: str, step_count: int) -
         and (current.get("text") or "").strip()
     )
 
+    # 最后一步是收尾回复时，状态可能滞后几秒；超过宽限期还 RUNNING，
+    # 说明这一轮虽然结束了、但还有后台任务撑着 executor（IDE 里显示 "N task running"）。
+    last_age = _seconds_since((current or {}).get("finishedAt") or (current or {}).get("at"))
+    background = bool(running and finished_turn and (last_age is None or last_age >= TURN_END_GRACE))
+
     if running and not finished_turn:
+        state = "working"
+    elif background:
         state = "working"
     elif waiting:
         state = "waiting"
@@ -510,13 +541,20 @@ def build_progress(events: List[Dict[str, Any]], status: str, step_count: int) -
             model = ev["model"]
             break
 
+    action = describe(current)
+    if background:
+        task = next((e.get("task") for e in reversed(turn) if e.get("task")), None)
+        title = (task or {}).get("title") or ""
+        action = f"后台任务运行中：{title}" if title else "后台任务运行中…"
+
     return {
         "state": state,
         "running": running,
+        "background": background,
         "totalSteps": step_count,
         "turnSteps": len(turn),
         "turnCapped": last_user_idx < 0 and bool(events),
-        "currentAction": describe(current),
+        "currentAction": action,
         "currentStepType": (current or {}).get("type", ""),
         "currentStatus": (current or {}).get("status", ""),
         "lastActivityAt": (current or {}).get("at") or (current or {}).get("finishedAt"),

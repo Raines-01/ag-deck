@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import os
 import tempfile
 import unittest
@@ -112,15 +113,46 @@ class CompactEventTest(unittest.TestCase):
         self.assertNotIn("hasBody", compact)
 
 
+def _finished_reply(age_seconds: float, task: str = "") -> dict:
+    stamp = (datetime.datetime.utcnow() - datetime.timedelta(seconds=age_seconds)).isoformat() + "Z"
+    event = {"index": 1, "kind": "assistant", "status": "DONE", "text": "all set",
+             "toolCalls": [], "finishedAt": stamp}
+    if task:
+        event["task"] = {"id": "task-1", "title": task}
+    return event
+
+
 class ProgressTest(unittest.TestCase):
-    def test_finished_reply_wins_over_stale_running_status(self):
-        events = [
-            {"index": 0, "kind": "user", "text": "go"},
-            {"index": 1, "kind": "assistant", "status": "DONE", "text": "all set", "toolCalls": []},
-        ]
+    def test_finished_reply_just_now_is_idle(self):
+        """状态滞后几秒：刚结束的一轮不该显示成还在跑。"""
+        events = [{"index": 0, "kind": "user", "text": "go"}, _finished_reply(2)]
         progress = client.build_progress(events, "CASCADE_RUN_STATUS_RUNNING", 2)
         self.assertEqual(progress["state"], "idle")
+        self.assertFalse(progress["background"])
         self.assertEqual(progress["turnSteps"], 1)
+
+    def test_still_running_with_finished_reply_is_a_background_task(self):
+        """回复结束但状态仍是 RUNNING：说明后台任务还在跑。"""
+        events = [{"index": 0, "kind": "user", "text": "go"},
+                  _finished_reply(120, "Run pytest on control_panel tests")]
+        progress = client.build_progress(events, "CASCADE_RUN_STATUS_RUNNING", 2)
+        self.assertEqual(progress["state"], "working")
+        self.assertTrue(progress["background"])
+        self.assertIn("后台任务", progress["currentAction"])
+        self.assertIn("pytest", progress["currentAction"])
+
+    def test_background_task_without_title(self):
+        events = [{"index": 0, "kind": "user", "text": "go"}, _finished_reply(120)]
+        progress = client.build_progress(events, "CASCADE_RUN_STATUS_RUNNING", 2)
+        self.assertEqual(progress["state"], "working")
+        self.assertTrue(progress["background"])
+        self.assertEqual(progress["currentAction"], "后台任务运行中…")
+
+    def test_finished_reply_and_idle_status_is_idle(self):
+        events = [{"index": 0, "kind": "user", "text": "go"}, _finished_reply(600)]
+        progress = client.build_progress(events, "CASCADE_RUN_STATUS_IDLE", 2)
+        self.assertEqual(progress["state"], "idle")
+        self.assertFalse(progress["background"])
 
     def test_working_when_tool_call_pending(self):
         events = [

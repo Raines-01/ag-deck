@@ -216,7 +216,7 @@ See [`docs/protocol.md`](docs/protocol.md) for the methods and payloads.
 ## Development
 
 ```bash
-python3 -m unittest discover -s tests -v     # 28 unit tests, no network needed
+python3 -m unittest discover -s tests -v     # 31 unit tests, no network needed
 python3 -m agdeck serve --demo               # UI with sample data
 node --check agdeck/static/app.js            # front-end syntax
 ./android/build.sh                           # rebuild the APK
@@ -465,7 +465,7 @@ Antigravity 的 agent 面板由独立进程 `resources/bin/language_server` 驱�
 ## 开发
 
 ```bash
-python3 -m unittest discover -s tests -v     # 28 个单测，不联网
+python3 -m unittest discover -s tests -v     # 31 个单测，不联网
 python3 -m agdeck serve --demo               # 用示例数据看界面
 node --check agdeck/static/app.js            # 前端语法检查
 ./android/build.sh                           # 重新打 APK

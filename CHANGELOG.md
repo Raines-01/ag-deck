@@ -28,10 +28,13 @@ machines.
 - Config file in the per-user config directory; friendly port-conflict
   handling; `--version`, `--verbose`.
 - Android WebView shell built without Gradle (`android/build.sh`).
-- 28 unit tests and a GitHub Actions matrix (Linux/macOS/Windows).
+- 31 unit tests and a GitHub Actions matrix (Linux/macOS/Windows).
 
 ### Fixed
 
+- Sessions that finished their turn but still had a background task were shown
+  as idle. The status now keeps "working" once the summary has been `RUNNING`
+  for more than 8 seconds and labels the task ("后台任务运行中：...").
 - File URIs are normalised without the host-specific `url2pathname`, so a
   POSIX workspace path renders identically on Windows (found by CI).
 - New sessions could inherit a retired model (`gemini-4-argon-disabled`) and
