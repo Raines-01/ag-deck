@@ -2,7 +2,7 @@
 
 **English** · [中文](#中文)
 
-**Use Antigravity on your computer — from your phone, or from another computer.** AG Deck runs a small web app on that machine and serves it over your LAN or a Tailscale tailnet, so you can follow every Cascade session live and send new instructions from wherever you are.
+**Use Antigravity on your computer — from your phone, tablet, or another computer.** AG Deck runs a small web app on that machine and serves it over your LAN or a Tailscale tailnet, so you can follow every Cascade session live and send new instructions from wherever you are.
 
 [![CI](https://github.com/Raines-01/ag-deck/actions/workflows/ci.yml/badge.svg)](https://github.com/Raines-01/ag-deck/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](pyproject.toml)
 
@@ -18,6 +18,18 @@
 
 ---
 
+## Remote access at a glance
+
+AG Deck is built for the moments when you are not sitting at the machine running Antigravity: on the sofa with a phone, on a laptop in another room, or in a different office.
+
+| Where you are | What you need |
+|---|---|
+| Same Wi-Fi / LAN | Nothing. Open the LAN URL printed at startup (`http://192.168.x.x:8848/`) and pair once. |
+| Mobile data or another network | **Bring your own network.** AG Deck does no NAT traversal and runs no relay. Install [Tailscale](https://tailscale.com/) on both devices (recommended), or use ZeroTier / WireGuard / a VPN you already have, then open the `100.x.y.z` address. |
+| No overlay network | Port forwarding plus a TLS reverse proxy also works, but it exposes the service to the internet — read the security section first. |
+
+Tailscale is not bundled and is not needed on a local network; it is simply the least painful way to make two devices behave like one LAN. Setting it up is your job, not AG Deck's.
+
 ## Why
 
 Antigravity's agent panel tells you what one session is doing. Once you have a dozen sessions spread over several repositories, you lose track:
@@ -32,6 +44,7 @@ AG Deck reads the same local RPC endpoint that Antigravity's own UI uses, and re
 
 | | |
 |---|---|
+| **Built for remote use** | Meant for a phone, tablet or another computer, not a second tab on the same desktop. Same LAN needs nothing; other networks ride on your own Tailscale or overlay network. |
 | **Session overview** | All sessions with title, workspace, repo, branch, step count and last activity. Running sessions show what they are doing *right now*. |
 | **Live progress** | State (working / waiting / idle), current action, total and per-turn step count, elapsed time, token usage. Updated every 2 s while running. |
 | **Execution timeline** | Grouped by turn: thinking, replies, shell commands with output and exit code, file reads, code edits with diffs, sub-agent tasks. Long stretches of file reads collapse into one row. |
@@ -95,6 +108,8 @@ Two supported paths, both work with the same UI:
 **2. Tailscale (recommended, works anywhere)** — install Tailscale on the computer and the phone, log in with the same account, then use the `100.x.y.z` address. AG Deck detects it automatically; nothing to configure.
 
 On the phone: open the URL, enter the 6-digit pairing code shown on the computer, done. The code is only needed once per device.
+
+> Across networks, path 2 is the only option: AG Deck never punches through NAT or relays your traffic. If you cannot run Tailscale or another overlay, stop here — the rest of the app assumes both devices can reach each other.
 
 ### Install as an app
 
@@ -241,7 +256,7 @@ Antigravity is a trademark of Google LLC. This project is unofficial and is not 
 
 [English](#ag-deck) · **中文**
 
-**在手机或另一台电脑上，使用你这台机器上的 Antigravity。** AG Deck 在你电脑上跑一个小型 Web 服务，通过局域网或 Tailscale 暴露出来：实时跟进每个 Cascade 会话，随时随地下发新指令。
+**在手机、平板或另一台电脑上，使用你这台机器上的 Antigravity。** AG Deck 在你电脑上跑一个小型 Web 服务，通过局域网或 Tailscale 暴露出来：实时跟进每个 Cascade 会话，随时随地下发新指令。
 
 > 非官方项目，与 Google 无关联。"Antigravity" 是 Google LLC 的商标。
 
@@ -254,6 +269,18 @@ Antigravity is a trademark of Google LLC. This project is unofficial and is not 
 </p>
 
 ---
+
+## 远程使用一览
+
+AG Deck 就是为"不在电脑前"的场景做的：躺在沙发上用手机看进度，在另一个房间用笔记本接手，或者在公司连家里的机器。
+
+| 你在哪 | 需要准备什么 |
+|---|---|
+| 同一个 Wi-Fi / 局域网 | 不需要额外配置。打开启动时打印的局域网地址（`http://192.168.x.x:8848/`），配对一次即可。 |
+| 手机流量、或在另一个网络 | **网络要你自己打通。** AG Deck 不做 NAT 穿透，也不提供中继。推荐在电脑和手机上都装 [Tailscale](https://tailscale.com/)，或用 ZeroTier / WireGuard / 你已有的 VPN，然后用 `100.x.y.z` 地址访问。 |
+| 没有 overlay 网络 | 端口映射 + 带 TLS 的反向代理也能用，但等于把服务暴露到公网 —— 先看「安全模型」一节。 |
+
+Tailscale 不是内置依赖，同一个局域网里也用不到；它只是让两台设备"像在同一个局域网"里最省事的方式。这一步需要你自己配置，AG Deck 不代劳。
 
 ## 它解决什么问题
 
@@ -269,6 +296,7 @@ AG Deck 读的是 Antigravity 自己用的那个本地 RPC，把全部会话变�
 
 | | |
 |---|---|
+| **为远程而生** | 给手机、平板或另一台电脑用，而不是同一个桌面上的第二个标签页。同一局域网开箱即用；跨网络走你自己的 Tailscale / overlay。 |
 | **会话总览** | 所有会话的标题、工作区、仓库、分支、步数、最后活动；运行中的会话直接显示"现在在做什么"。 |
 | **实时进度** | 状态（进行中 / 等待确认 / 空闲）、当前动作、总步数与本轮步数、用时、token 消耗；运行中每 2 秒刷新。 |
 | **执行时间线** | 按轮分组：思考、回复、带输出和退出码的命令、读文件、带 diff 的改码、子任务。连续的文件读取会合并成一行。 |
@@ -331,6 +359,8 @@ agdeck
 **2. Tailscale（推荐，跨网络可用）**：电脑和手机装 Tailscale，用同一账号登录，使用 `100.x.y.z` 地址。AG Deck 会自动识别，无需配置。
 
 手机上打开地址 → 输入电脑上显示的 6 位配对码 → 以后自动登录，只需一次。
+
+> 跨网络时只有第 2 条路：AG Deck 不做 NAT 穿透，也不中转你的流量。如果 Tailscale 这类 overlay 网络用不了，后面的功能也就无从谈起 —— 两端必须能互相访问。
 
 ### 装成 App
 
