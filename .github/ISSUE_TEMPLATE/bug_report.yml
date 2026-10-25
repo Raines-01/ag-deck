@@ -1,0 +1,76 @@
+name: Bug report
+description: Something does not work — the dashboard, the CLI, or the Android app.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please run `agdeck doctor` first — it prints the
+        detected process, ports and probe result as JSON and contains no token.
+
+        中文用户可以直接用中文填写。
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What did you expect, and what happened instead?
+      placeholder: |
+        Expected the session list, got "没有连上 Antigravity" …
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start Antigravity
+        2. Run `agdeck`
+        3. Open http://127.0.0.1:8848/
+    validations:
+      required: false
+
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `agdeck doctor`
+      description: Paste the JSON. It contains paths and PIDs, no secrets.
+      render: json
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: AG Deck version
+      description: Output of `agdeck --version`
+      placeholder: AG Deck 1.0.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - Other / container
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where does it happen?
+      options:
+        - Desktop browser
+        - Phone browser (same Wi-Fi / Tailscale)
+        - Android app
+        - CLI
+        - Something else
+    validations:
+      required: true

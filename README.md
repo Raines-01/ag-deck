@@ -4,6 +4,8 @@
 
 A local web dashboard for **Antigravity Cascade sessions** — see what every agent session is doing right now, follow its execution timeline, and send new instructions from your desktop or phone.
 
+[![CI](https://github.com/Raines-01/ag-deck/actions/workflows/ci.yml/badge.svg)](https://github.com/Raines-01/ag-deck/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](pyproject.toml)
+
 > Unofficial project. Not affiliated with, endorsed by, or supported by Google. "Antigravity" is a trademark of Google LLC.
 
 <p align="center">
@@ -56,7 +58,7 @@ AG Deck reads the same local RPC endpoint that Antigravity's own UI uses, and re
 
 ```bash
 # 1. get the code
-git clone https://github.com/your-name/ag-deck && cd ag-deck
+git clone https://github.com/Raines-01/ag-deck && cd ag-deck
 
 # 2. install (pick one)
 pipx install .                                   # isolated, `agdeck` on PATH
@@ -281,7 +283,7 @@ AG Deck 直接读 Antigravity 自己用的本地 RPC，把全部会话变成一�
 
 ```bash
 # 1. 拿到代码
-git clone https://github.com/your-name/ag-deck && cd ag-deck
+git clone https://github.com/Raines-01/ag-deck && cd ag-deck
 
 # 2. 安装（二选一）
 pipx install .                                   # 独立环境，`agdeck` 进 PATH

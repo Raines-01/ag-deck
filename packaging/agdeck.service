@@ -1,6 +1,6 @@
 [Unit]
 Description=AG Deck — dashboard for Antigravity Cascade sessions
-Documentation=https://github.com/your-name/ag-deck
+Documentation=https://github.com/Raines-01/ag-deck
 After=network-online.target
 Wants=network-online.target
 
