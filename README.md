@@ -55,14 +55,19 @@ AG Deck reads the same local RPC endpoint that Antigravity's own UI uses, and re
 ## Quick start
 
 ```bash
-# 1. install (pick one)
-pipx install ag-deck
-# or, from a checkout:
-python3 -m venv .venv && . .venv/bin/activate && pip install -e .
+# 1. get the code
+git clone https://github.com/your-name/ag-deck && cd ag-deck
 
-# 2. run
+# 2. install (pick one)
+pipx install .                                   # isolated, `agdeck` on PATH
+# or: python3 -m venv .venv && . .venv/bin/activate && pip install -e .
+
+# 3. run
 agdeck
 ```
+
+> Not on PyPI yet — install from a checkout. Everything needs only the
+> standard library, so `./start.sh` also works without installing at all.
 
 You will see:
 
@@ -275,14 +280,18 @@ AG Deck 直接读 Antigravity 自己用的本地 RPC，把全部会话变成一�
 ## 快速开始
 
 ```bash
-# 1. 安装（二选一）
-pipx install ag-deck
-# 或者从源码：
-python3 -m venv .venv && . .venv/bin/activate && pip install -e .
+# 1. 拿到代码
+git clone https://github.com/your-name/ag-deck && cd ag-deck
 
-# 2. 启动
+# 2. 安装（二选一）
+pipx install .                                   # 独立环境，`agdeck` 进 PATH
+# 或者：python3 -m venv .venv && . .venv/bin/activate && pip install -e .
+
+# 3. 启动
 agdeck
 ```
+
+> 还没发布到 PyPI，请从源码安装。全部只用标准库，所以不安装、直接 `./start.sh` 也能跑。
 
 启动后终端会打印：
 
