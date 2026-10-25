@@ -2,7 +2,7 @@
 
 **English** · [中文](#中文)
 
-**Use Antigravity on your computer — from your phone, or from another computer.** AG Deck is a local web dashboard that works over your LAN or a Tailscale tailnet: follow every Cascade session live, and send new instructions from wherever you are.
+**Use Antigravity on your computer — from your phone, or from another computer.** AG Deck runs a small web app on that machine and serves it over your LAN or a Tailscale tailnet, so you can follow every Cascade session live and send new instructions from wherever you are.
 
 [![CI](https://github.com/Raines-01/ag-deck/actions/workflows/ci.yml/badge.svg)](https://github.com/Raines-01/ag-deck/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](pyproject.toml)
 

@@ -201,7 +201,7 @@ def cmd_serve(args) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="agdeck",
-        description=f"{APP_NAME} — dashboard for Antigravity Cascade sessions.",
+        description=f"{APP_NAME} — use Antigravity on your computer from your phone or another machine.",
     )
     parser.add_argument("--version", action="version", version=f"{APP_NAME} {__version__}")
     sub = parser.add_subparsers(dest="cmd")
