@@ -1,0 +1,36 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# AG Deck runtime state (token, config, logs) lives in the user config dir,
+# but never commit it if someone points AGDECK_HOME here.
+.access-token
+config.json
+*.log
+
+# Android build output and signing material
+android/build/
+android/dist/
+android/keystore/*.jks
+android/keystore/*.keystore
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local test scratch
+/tmp/
+.pytest_cache/
+.coverage

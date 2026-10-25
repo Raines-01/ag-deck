@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AG Deck</string>
+    <string name="sc_refresh">刷新页面</string>
+    <string name="sc_settings">修改服务器地址</string>
+    <string name="connecting">正在连接…</string>
+    <string name="cant_reach">连不上服务器</string>
+    <string name="no_addr">还没有配置服务器地址</string>
+    <string name="retry">重试</string>
+    <string name="change_addr">修改地址</string>
+    <string name="server_addr">服务器地址</string>
+    <string name="save">保存</string>
+    <string name="cancel">取消</string>
+    <string name="hint_addr">http://100.x.x.x:8848</string>
+</resources>

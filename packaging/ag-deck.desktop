@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=AG Deck
+GenericName=Antigravity Dashboard
+Comment=Watch Antigravity Cascade sessions and send instructions
+Comment[zh_CN]=查看 Antigravity 会话进度并下发指令
+Exec=agdeck --open
+Terminal=true
+Categories=Development;
+Keywords=antigravity;agent;cascade;dashboard;
+# Install an icon with:  cp agdeck/static/icon.svg ~/.local/share/icons/ag-deck.svg
+Icon=ag-deck
+StartupNotify=false
