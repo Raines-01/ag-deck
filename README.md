@@ -241,9 +241,19 @@ Antigravity is a trademark of Google LLC. This project is unofficial and is not 
 
 [English](#ag-deck) · **中文**
 
-**在手机或另一台电脑上，使用你这台机器上的 Antigravity。** AG Deck 是一块跑在本机的 Web 看板，通过局域网或 Tailscale 访问：实时看清每个 Cascade 会话在做什么，并随手下发新指令。
+**在手机或另一台电脑上，使用你这台机器上的 Antigravity。** AG Deck 在你电脑上跑一个小型 Web 服务，通过局域网或 Tailscale 暴露出来：实时跟进每个 Cascade 会话，随时随地下发新指令。
 
 > 非官方项目，与 Google 无关联。"Antigravity" 是 Google LLC 的商标。
+
+<p align="center">
+  <img src="docs/screenshots/desktop.png" alt="AG Deck 桌面端" width="880">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/mobile.png" alt="AG Deck 手机端" width="300">
+</p>
+
+---
 
 ## 它解决什么问题
 
@@ -253,19 +263,21 @@ Antigravity 自带的 agent 面板一次只能看一个会话。当你有十几�
 - 哪个卡在等我确认？
 - 能不能不回到电脑前，在手机上瞄一眼？
 
-AG Deck 直接读 Antigravity 自己用的本地 RPC，把全部会话变成一块实时看板。它只做读取和下发指令，不截图、不模拟点击。
+AG Deck 读的是 Antigravity 自己用的那个本地 RPC，把全部会话变成一块实时看板。它只做读取和下发指令，不截图、不模拟点击，完全跑在你自己机器上。
 
 ## 功能
 
-- **会话总览**：标题、工作区、仓库、分支、步数、最后活动；运行中的会话直接显示"现在在干嘛"。
-- **实时进度**：状态（进行中 / 等待确认 / 空闲）、当前动作、总步数、本轮步数、用时、token；运行中每 2 秒刷新。
-- **执行时间线**：按轮分组，思考、回复、命令（含输出与退出码）、读文件、改代码（含 diff）、子任务；连续的文件读取自动合并成一行，点开看明细。
-- **下发指令**：底部输入框直接发给当前会话，可选模型；运行中可以停止。
-- **新建会话**：选最近的工作区或手填路径，写第一条指令即可。
-- **手机适配**：单栏布局、底部输入框、"回到最新"浮标、完成提醒（声音 + 标题角标），可添加到主屏幕。
-- **Android App**：`android/` 里 45 KB 的 WebView 外壳，有桌面图标、系统返回键、记住服务器地址。
-- **命令行**：`agdeck list / show / watch / send / new / models / doctor`。
-- **演示模式**：`agdeck serve --demo` 用示例数据展示完整界面，不需要装 Antigravity。
+| | |
+|---|---|
+| **会话总览** | 所有会话的标题、工作区、仓库、分支、步数、最后活动；运行中的会话直接显示"现在在做什么"。 |
+| **实时进度** | 状态（进行中 / 等待确认 / 空闲）、当前动作、总步数与本轮步数、用时、token 消耗；运行中每 2 秒刷新。 |
+| **执行时间线** | 按轮分组：思考、回复、带输出和退出码的命令、读文件、带 diff 的改码、子任务。连续的文件读取会合并成一行。 |
+| **下发指令** | 在底部输入框直接发给会话，可选模型，也可以停止正在跑的一轮。 |
+| **新建会话** | 选最近的工作区（或手填路径），写第一条指令即可。 |
+| **手机适配** | 单栏布局、底部输入框、"回到最新"浮标、完成提示音 + 标题角标，可添加到主屏幕。 |
+| **Android App** | `android/` 下 45 KB 的 WebView 外壳：桌面图标、系统返回键、记住服务器地址。 |
+| **命令行** | `agdeck list / show / watch / send / new / models / doctor`。 |
+| **演示模式** | `agdeck serve --demo` 用示例数据展示完整界面，不需要 Antigravity。 |
 
 ## 环境要求
 
@@ -314,15 +326,16 @@ agdeck
 
 两条路，界面完全一样：
 
-1. **同一个 Wi-Fi**：用启动时打印的局域网地址（`http://192.168.x.x:8848/`）。
-2. **Tailscale（推荐，跨网络可用）**：电脑和手机装 Tailscale，用同一账号登录，使用 `100.x.y.z` 地址。AG Deck 会自动识别，无需配置。
+**1. 同一个 Wi-Fi**：用启动时打印的局域网地址（`http://192.168.x.x:8848/`）。
+
+**2. Tailscale（推荐，跨网络可用）**：电脑和手机装 Tailscale，用同一账号登录，使用 `100.x.y.z` 地址。AG Deck 会自动识别，无需配置。
 
 手机上打开地址 → 输入电脑上显示的 6 位配对码 → 以后自动登录，只需一次。
 
-**装成 App**：
+### 装成 App
 
-- iOS / Android 浏览器：分享 → 添加到主屏幕，全屏运行、独立图标。
-- Android APK：`android/dist/AG-Deck.apk`（用 `android/build.sh` 自己构建）。首次启动会让你填服务器地址，填电脑上打印的手机地址即可。
+- **iOS / Android 浏览器**：分享 → *添加到主屏幕*，全屏运行、独立图标。
+- **Android APK**：`android/dist/AG-Deck.apk`（用 `android/build.sh` 自己构建）。首次启动会让你填服务器地址，填电脑上打印的手机地址即可。
 
 系统通知需要 HTTPS。想用的话把 Tailscale 的 HTTPS 套在前面：
 
@@ -364,9 +377,17 @@ AG Deck 能向 agent 下发指令，所以默认把网络当成不可信：
 }
 ```
 
-环境变量：`AGDECK_HOME`（配置目录）、`AGDECK_PORT`、`AGDECK_HOST`。命令行参数优先于配置文件：`--port`、`--host`、`--local-only`、`--open`、`--demo`、`--verbose`、`--config`。
+| 键 | 含义 |
+|---|---|
+| `port` | HTTP 端口。被占用时自动往后找一个空闲端口并打印。 |
+| `host` | 监听地址。设为 `127.0.0.1` 会关闭手机访问。 |
+| `openBrowser` | 启动后自动打开浏览器。 |
+| `defaultModel` | 强制新消息使用的模型（留空 = 让 Antigravity 决定）。 |
+| `pollIdleSeconds` / `pollBusySeconds` | 实时刷新间隔。 |
 
-端口被占用时会自动往后找，并在终端打印实际地址。
+环境变量：`AGDECK_HOME`（配置目录）、`AGDECK_PORT`、`AGDECK_HOST`。
+
+命令行参数优先于配置文件：`--port`、`--host`、`--local-only`、`--open`、`--demo`、`--verbose`、`--config`。
 
 ## 命令行
 
@@ -419,6 +440,28 @@ python3 -m agdeck serve --demo               # 用示例数据看界面
 node --check agdeck/static/app.js            # 前端语法检查
 ./android/build.sh                           # 重新打 APK
 ```
+
+目录结构：
+
+```
+agdeck/
+  rpc.py            发现进程 + Connect(JSON) 传输
+  platform_util.py  进程、端口、地址（Linux/macOS/Windows）
+  client.py         会话模型、归一化、压缩
+  demo.py           示例后端
+  server.py         HTTP 服务、鉴权、SSE
+  cli.py            命令行入口
+  static/           零依赖前端
+android/            WebView 外壳（不用 Gradle 构建）
+docs/protocol.md    逆向出来的接口说明
+```
+
+## 路线图
+
+- [ ] 界面英文文案（目前以中文为主，引导页带英文提示）
+- [ ] 扫码配对（需要内置一个极简 QR 编码器或可选依赖）
+- [ ] 跨会话搜索步骤内容
+- [ ] GitHub Releases 提供正式签名的 APK
 
 ## 许可证
 
