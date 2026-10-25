@@ -28,10 +28,12 @@ machines.
 - Config file in the per-user config directory; friendly port-conflict
   handling; `--version`, `--verbose`.
 - Android WebView shell built without Gradle (`android/build.sh`).
-- 24 unit tests and a GitHub Actions matrix (Linux/macOS/Windows).
+- 28 unit tests and a GitHub Actions matrix (Linux/macOS/Windows).
 
 ### Fixed
 
+- File URIs are normalised without the host-specific `url2pathname`, so a
+  POSIX workspace path renders identically on Windows (found by CI).
 - New sessions could inherit a retired model (`gemini-4-argon-disabled`) and
   fail with `NOT_FOUND`; disabled models are now filtered out.
 - Cancelling an already-finished session returned 500; it is now a no-op with

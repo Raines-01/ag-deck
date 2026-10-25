@@ -67,6 +67,26 @@ class NormalizeStepTest(unittest.TestCase):
         self.assertEqual(event["fileLines"], 400)    # lines in the whole file
 
 
+class UriToPathTest(unittest.TestCase):
+    """Session URIs must render the same on every host OS (see Windows CI)."""
+
+    def test_posix_uri(self):
+        self.assertEqual(client._uri_to_path("file:///home/dev/app/main.py"),
+                         "/home/dev/app/main.py")
+
+    def test_windows_drive_uri(self):
+        self.assertEqual(client._uri_to_path("file:///C:/Users/me/app/main.py"),
+                         "C:\\Users\\me\\app\\main.py")
+
+    def test_percent_decoding(self):
+        self.assertEqual(client._uri_to_path("file:///home/dev/my%20app/main.py"),
+                         "/home/dev/my app/main.py")
+
+    def test_non_file_uri_is_passed_through(self):
+        self.assertEqual(client._uri_to_path("untitled:Untitled-1"), "untitled:Untitled-1")
+        self.assertEqual(client._uri_to_path(""), "")
+
+
 class CompactEventTest(unittest.TestCase):
     def test_strips_heavy_fields(self):
         full = client.normalize_step(_step_cmd(), 0)

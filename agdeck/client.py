@@ -13,8 +13,10 @@ from __future__ import annotations
 import datetime
 import json
 import os
+import re
 import threading
 import time
+import urllib.parse
 import urllib.request
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -37,11 +39,24 @@ def _basename(path: str) -> str:
 # --------------------------------------------------------------------------
 
 def _uri_to_path(uri: str) -> str:
+    """file:// URI to a readable path, independent of the host OS.
+
+    Antigravity emits POSIX URIs (``file:///home/me/app``) on Linux/macOS and
+    drive URIs (``file:///C:/Users/me/app``) on Windows. ``url2pathname`` is
+    OS-specific — on Windows it would turn the POSIX form into ``\\home\\...``
+    — so we normalise both shapes ourselves. The result is only used for
+    display, never for filesystem access.
+    """
     if not uri:
         return ""
-    if uri.startswith("file://"):
-        return urllib.request.url2pathname(uri[7:])
-    return uri
+    if not uri.startswith("file://"):
+        return uri
+    raw = urllib.parse.unquote(uri[len("file://"):])
+    if re.match(r"^/[A-Za-z]:", raw):        # Windows drive: /C:/Users/me
+        return raw[1:].replace("/", "\\")
+    if not raw.startswith("/"):              # UNC share: file://server/share
+        return "//" + raw
+    return raw
 
 
 def list_sessions(include_archived: bool = True, activity: bool = False) -> List[Dict[str, Any]]:
