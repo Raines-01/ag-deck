@@ -28,13 +28,17 @@ machines.
 - Config file in the per-user config directory; friendly port-conflict
   handling; `--version`, `--verbose`.
 - Android WebView shell built without Gradle (`android/build.sh`).
-- 31 unit tests and a GitHub Actions matrix (Linux/macOS/Windows).
+- 33 unit tests and a GitHub Actions matrix (Linux/macOS/Windows).
 
 ### Fixed
 
 - Sessions that finished their turn but still had a background task were shown
-  as idle. The status now keeps "working" once the summary has been `RUNNING`
-  for more than 8 seconds and labels the task ("后台任务运行中：...").
+  as idle: Antigravity reports `IDLE` for the trajectory while the task runs.
+  The status is now derived from the task's own lifecycle — a step carrying
+  `taskDetails` stays open until its completion message arrives — and the
+  action line names the task ("后台任务运行中：..."). The system message that
+  follows a finished turn no longer makes the session look busy for a few
+  seconds.
 - File URIs are normalised without the host-specific `url2pathname`, so a
   POSIX workspace path renders identically on Windows (found by CI).
 - New sessions could inherit a retired model (`gemini-4-argon-disabled`) and

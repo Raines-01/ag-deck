@@ -113,60 +113,99 @@ class CompactEventTest(unittest.TestCase):
         self.assertNotIn("hasBody", compact)
 
 
-def _finished_reply(age_seconds: float, task: str = "") -> dict:
-    stamp = (datetime.datetime.utcnow() - datetime.timedelta(seconds=age_seconds)).isoformat() + "Z"
-    event = {"index": 1, "kind": "assistant", "status": "DONE", "text": "all set",
-             "toolCalls": [], "finishedAt": stamp}
-    if task:
-        event["task"] = {"id": "task-1", "title": task}
-    return event
+def _finished_reply() -> dict:
+    return {"index": 1, "kind": "assistant", "status": "DONE", "text": "all set",
+            "toolCalls": [], "task": None}
+
+
+def _task_step(index: int = 2, task_id: str = "cascade/task-7",
+               title: str = "Run pytest on control_panel tests") -> dict:
+    return {"index": index, "kind": "tool", "task": {"id": task_id, "title": title},
+            "text": "", "result": ""}
 
 
 class ProgressTest(unittest.TestCase):
-    def test_finished_reply_just_now_is_idle(self):
-        """状态滞后几秒：刚结束的一轮不该显示成还在跑。"""
-        events = [{"index": 0, "kind": "user", "text": "go"}, _finished_reply(2)]
+    def test_stale_running_status_with_finished_reply_is_idle(self):
+        """状态滞后：回复已经收尾，没有任务时按空闲处理。"""
+        events = [{"index": 0, "kind": "user", "text": "go"}, _finished_reply()]
         progress = client.build_progress(events, "CASCADE_RUN_STATUS_RUNNING", 2)
         self.assertEqual(progress["state"], "idle")
         self.assertFalse(progress["background"])
         self.assertEqual(progress["turnSteps"], 1)
 
-    def test_still_running_with_finished_reply_is_a_background_task(self):
-        """回复结束但状态仍是 RUNNING：说明后台任务还在跑。"""
+    def test_trailing_system_message_does_not_resurrect_the_turn(self):
+        """本轮结束后插入的系统消息不代表新一轮，状态滞后时也不该显示为忙碌。"""
+        events = [
+            {"index": 0, "kind": "user", "text": "go"},
+            _finished_reply(),
+            {"index": 3, "kind": "system", "text": "System Message",
+             "message": "Run sleep command finished"},
+        ]
+        progress = client.build_progress(events, "CASCADE_RUN_STATUS_RUNNING", 4)
+        self.assertEqual(progress["state"], "idle")
+        self.assertEqual(progress["currentAction"], "本轮回复完成")
+
+    def test_open_task_keeps_the_session_working_even_when_idle(self):
+        """后台任务在跑时 summary 也是 IDLE，必须靠任务完成标记判断。"""
         events = [{"index": 0, "kind": "user", "text": "go"},
-                  _finished_reply(120, "Run pytest on control_panel tests")]
-        progress = client.build_progress(events, "CASCADE_RUN_STATUS_RUNNING", 2)
+                  _task_step(), _finished_reply()]
+        progress = client.build_progress(events, "CASCADE_RUN_STATUS_IDLE", 3)
         self.assertEqual(progress["state"], "working")
         self.assertTrue(progress["background"])
         self.assertIn("后台任务", progress["currentAction"])
         self.assertIn("pytest", progress["currentAction"])
 
-    def test_background_task_without_title(self):
-        events = [{"index": 0, "kind": "user", "text": "go"}, _finished_reply(120)]
-        progress = client.build_progress(events, "CASCADE_RUN_STATUS_RUNNING", 2)
-        self.assertEqual(progress["state"], "working")
-        self.assertTrue(progress["background"])
-        self.assertEqual(progress["currentAction"], "后台任务运行中…")
-
-    def test_finished_reply_and_idle_status_is_idle(self):
-        events = [{"index": 0, "kind": "user", "text": "go"}, _finished_reply(600)]
-        progress = client.build_progress(events, "CASCADE_RUN_STATUS_IDLE", 2)
+    def test_finished_task_is_closed_by_the_system_message(self):
+        events = [
+            {"index": 0, "kind": "user", "text": "go"},
+            _task_step(),
+            _finished_reply(),
+            {"index": 4, "kind": "system", "text":
+             'Task id "cascade/task-7" finished with result:\nThe command exited with code 0.'},
+        ]
+        progress = client.build_progress(events, "CASCADE_RUN_STATUS_IDLE", 4)
         self.assertEqual(progress["state"], "idle")
         self.assertFalse(progress["background"])
 
-    def test_working_when_tool_call_pending(self):
+    def test_completion_message_keeps_the_id_separate_from_the_title(self):
+        """系统消息的标题不含任务 id，完整 message 才带。"""
         events = [
             {"index": 0, "kind": "user", "text": "go"},
-            {"index": 1, "kind": "assistant", "status": "GENERATING", "text": "", "toolCalls": [{"name": "x"}]},
+            _task_step(),
+            _finished_reply(),
+            {"index": 4, "kind": "system", "text": "Background sleep command finished",
+             "message": '[Message] sender=cascade/task-7 content=Task id "cascade/task-7" '
+                        'finished with result:\nThe command exited with code 0.'},
         ]
-        progress = client.build_progress(events, "CASCADE_RUN_STATUS_RUNNING", 2)
-        self.assertEqual(progress["state"], "working")
-        self.assertEqual(progress["currentAction"], "思考中…")
+        self.assertEqual(client.open_tasks(events), [])
+        progress = client.build_progress(events, "CASCADE_RUN_STATUS_IDLE", 4)
+        self.assertFalse(progress["background"])
 
-    def test_waiting_on_question(self):
-        events = [{"index": 0, "kind": "question", "text": "continue?"}]
-        progress = client.build_progress(events, "CASCADE_RUN_STATUS_IDLE", 1)
-        self.assertEqual(progress["state"], "waiting")
+    def test_killed_task_is_closed_by_manage_task_result(self):
+        events = [
+            {"index": 0, "kind": "user", "text": "go"},
+            _task_step(),
+            {"index": 3, "kind": "tool", "text": "Killing task",
+             "result": 'Task "cascade/task-7" cancelled.'},
+            _finished_reply(),
+        ]
+        progress = client.build_progress(events, "CASCADE_RUN_STATUS_IDLE", 4)
+        self.assertFalse(progress["background"])
+
+    def test_status_running_probe_does_not_close_the_task(self):
+        events = [
+            {"index": 0, "kind": "user", "text": "go"},
+            _task_step(),
+            {"index": 3, "kind": "tool", "text": "Check task status",
+             "result": 'Task: cascade/task-7\nStatus: RUNNING\nLog: ...'},
+        ]
+        self.assertEqual(len(client.open_tasks(events)), 1)
+
+    def test_background_task_without_title(self):
+        events = [{"index": 0, "kind": "user", "text": "go"},
+                  _task_step(title=""), _finished_reply()]
+        progress = client.build_progress(events, "CASCADE_RUN_STATUS_IDLE", 3)
+        self.assertEqual(progress["currentAction"], "后台任务运行中…")
 
 
 class CommandLineParsingTest(unittest.TestCase):

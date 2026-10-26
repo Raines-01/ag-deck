@@ -95,7 +95,7 @@ def list_sessions(include_archived: bool = True, activity: bool = False) -> List
             if not s["running"]:
                 continue
             try:
-                offset = max(0, s["stepCount"] - 6)
+                offset = max(0, s["stepCount"] - 40)
                 steps = get_steps(s["id"], offset, timeout=8)
                 if steps:
                     events = normalize_steps(steps, offset)
@@ -258,17 +258,42 @@ def _elapsed_ms(meta: Dict[str, Any]) -> int:
     return 0
 
 
-#: 一轮结束后 Antigravity 的 summary 状态还会滞后几秒才翻成 IDLE。
-#: 超过这个宽限期仍是 RUNNING，就说明真有后台任务在跑。
-TURN_END_GRACE = 8.0
+#: 任务结束时 Antigravity 会插入一条 SYSTEM_MESSAGE，内容形如
+#: ``Task id "<id>" finished with result: ...``，kill 的结果则在 manage_task 的 result 里。
+_TASK_CLOSED = (
+    "finished with result",
+    "cancelled",
+    "canceled",
+    "status: done",
+    "status: failed",
+    "status: cancelled",
+    "exited with code",
+)
 
 
-def _seconds_since(value: Any) -> Optional[float]:
-    parsed = _parse_ts(value)
-    if parsed is None:
-        return None
-    now = datetime.datetime.utcnow()
-    return max(0.0, (now - parsed).total_seconds())
+def open_tasks(events: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Tasks created by ``taskDetails`` that have no completion marker afterwards.
+
+    A background command's step is already ``DONE`` while the process keeps
+    running, and the trajectory status stays ``IDLE``; the only reliable signal
+    is the later system message (or manage_task result) that closes the task.
+    """
+    pending: Dict[str, Dict[str, Any]] = {}
+    for ev in events:
+        task = ev.get("task") or {}
+        task_id = task.get("id") or ""
+        if task_id:
+            pending[task_id] = task
+        if not pending:
+            continue
+        blob = "\n".join(str(ev.get(k) or "") for k in ("text", "message", "result"))
+        low = blob.lower()
+        if not any(marker in low for marker in _TASK_CLOSED):
+            continue
+        for tid in list(pending):
+            if tid and tid in blob:
+                pending.pop(tid, None)
+    return list(pending.values())
 
 
 def normalize_step(step: Dict[str, Any], index: int) -> Dict[str, Any]:
@@ -356,7 +381,10 @@ def normalize_step(step: Dict[str, Any], index: int) -> Dict[str, Any]:
 
     elif stype == "CORTEX_STEP_TYPE_SYSTEM_MESSAGE":
         info = payload.get("renderInfo") or {}
+        # 标题是给人看的（不含任务 id），完整 message 才带 "Task id ... finished"，
+        # 任务是否结束要靠后者判断。
         ev["text"] = _clip(info.get("title") or payload.get("message", ""), 2000)
+        ev["message"] = _clip(payload.get("message", ""), 1200)
         ev["subtype"] = payload.get("eventType", "")
 
     elif stype == "CORTEX_STEP_TYPE_ASK_QUESTION":
@@ -374,6 +402,9 @@ def normalize_step(step: Dict[str, Any], index: int) -> Dict[str, Any]:
             ev["label"] = "子任务"
             ev["text"] = args.get("toolSummary") or args.get("toolAction") or ""
             ev["subtype"] = args.get("Action", "")
+            result = ((payload.get("result") or {}) if isinstance(payload, dict) else {}) or {}
+            if isinstance(result, dict) and result.get("result"):
+                ev["result"] = _clip(result["result"], 600)
         else:
             ev["label"] = name.replace("_", " ").title() or "工具调用"
             ev["text"] = args.get("toolSummary") or _clip(tc.get("argumentsJson", ""), 300)
@@ -511,23 +542,26 @@ def build_progress(events: List[Dict[str, Any]], status: str, step_count: int) -
             waiting = True
 
     # 最后一步已经是收尾的回复文本，就视为这一轮结束（Antigravity 的 summary 状态
-    # 会滞后几秒才翻成 IDLE，直接用状态会让界面看起来"永远在跑"）
+    # 会滞后几秒才翻成 IDLE，直接用状态会让界面看起来"永远在跑"）。
+    # 注意跳过系统消息：本轮结束后它还会插一条（例如后台任务完成通知），
+    # 那不是新一轮的开始。
+    meaningful = next((e for e in reversed(events) if e.get("kind") != "system"), None)
     finished_turn = bool(
-        current
-        and current.get("kind") == "assistant"
-        and current.get("status") == "DONE"
-        and not current.get("toolCalls")
-        and (current.get("text") or "").strip()
+        meaningful
+        and meaningful.get("kind") == "assistant"
+        and meaningful.get("status") == "DONE"
+        and not meaningful.get("toolCalls")
+        and (meaningful.get("text") or "").strip()
     )
 
-    # 最后一步是收尾回复时，状态可能滞后几秒；超过宽限期还 RUNNING，
-    # 说明这一轮虽然结束了、但还有后台任务撑着 executor（IDE 里显示 "N task running"）。
-    last_age = _seconds_since((current or {}).get("finishedAt") or (current or {}).get("at"))
-    background = bool(running and finished_turn and (last_age is None or last_age >= TURN_END_GRACE))
+    # 后台任务：step 已 DONE、status 也回到 IDLE，但任务还没收到完成通知。
+    # 这是 IDE 里 "N task running" 的唯一可靠来源。
+    tasks = open_tasks(events)
+    background = bool(tasks)
 
-    if running and not finished_turn:
+    if background:
         state = "working"
-    elif background:
+    elif running and not finished_turn:
         state = "working"
     elif waiting:
         state = "waiting"
@@ -543,9 +577,11 @@ def build_progress(events: List[Dict[str, Any]], status: str, step_count: int) -
 
     action = describe(current)
     if background:
-        task = next((e.get("task") for e in reversed(turn) if e.get("task")), None)
-        title = (task or {}).get("title") or ""
+        title = (tasks[-1] or {}).get("title") or ""
         action = f"后台任务运行中：{title}" if title else "后台任务运行中…"
+    elif state == "idle" and finished_turn:
+        # 尾部可能有系统消息（任务完成通知），对用户来说就是"这一轮结束了"
+        action = "本轮回复完成"
 
     return {
         "state": state,
