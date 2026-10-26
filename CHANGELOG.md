@@ -28,7 +28,7 @@ machines.
 - Config file in the per-user config directory; friendly port-conflict
   handling; `--version`, `--verbose`.
 - Android WebView shell built without Gradle (`android/build.sh`).
-- 33 unit tests and a GitHub Actions matrix (Linux/macOS/Windows).
+- 36 unit tests and a GitHub Actions matrix (Linux/macOS/Windows).
 
 ### Fixed
 
@@ -39,6 +39,8 @@ machines.
   action line names the task ("后台任务运行中：..."). The system message that
   follows a finished turn no longer makes the session look busy for a few
   seconds.
+- The sidebar refetched 40 steps per running session on every poll. It now reuses
+  the previous activity text while the step count is unchanged.
 - File URIs are normalised without the host-specific `url2pathname`, so a
   POSIX workspace path renders identically on Windows (found by CI).
 - New sessions could inherit a retired model (`gemini-4-argon-disabled`) and

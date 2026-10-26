@@ -68,6 +68,52 @@ class NormalizeStepTest(unittest.TestCase):
         self.assertEqual(event["fileLines"], 400)    # lines in the whole file
 
 
+class ListActivityCacheTest(unittest.TestCase):
+    """The sidebar polls every couple of seconds; unchanged step counts must not refetch."""
+
+    def setUp(self):
+        client._ACTIVITY_CACHE.clear()
+        self.summary = {
+            "cid-1": {
+                "status": "CASCADE_RUN_STATUS_RUNNING",
+                "stepCount": 5,
+                "annotations": {"title": "demo"},
+                "workspaces": [{"workspaceFolderAbsoluteUri": "file:///tmp/demo",
+                                "branchName": "main", "repository": {"computedName": "demo"}}],
+            }
+        }
+
+    def _run(self):
+        with mock.patch.object(client, "rpc",
+                               return_value={"trajectorySummaries": self.summary}), \
+             mock.patch.object(client, "get_steps",
+                               return_value=[{"type": "CORTEX_STEP_TYPE_USER_INPUT",
+                                              "userInput": {"userResponse": "go"}}]) as steps:
+            rows = client.list_sessions(activity=True)
+        return rows, steps
+
+    def test_reuses_activity_when_the_step_count_is_unchanged(self):
+        rows, steps = self._run()
+        self.assertEqual(rows[0]["activity"], "已收到指令，正在启动…")
+        self.assertEqual(steps.call_count, 1)
+
+        rows, steps = self._run()
+        self.assertEqual(rows[0]["activity"], "已收到指令，正在启动…")
+        self.assertEqual(steps.call_count, 0, "步数没变时不该再拉步骤")
+
+    def test_refetches_after_new_steps(self):
+        self._run()
+        self.summary["cid-1"]["stepCount"] = 6
+        _, steps = self._run()
+        self.assertEqual(steps.call_count, 1)
+
+    def test_idle_sessions_skip_the_activity_probe(self):
+        self.summary["cid-1"]["status"] = "CASCADE_RUN_STATUS_IDLE"
+        rows, steps = self._run()
+        self.assertNotIn("activity", rows[0])
+        self.assertEqual(steps.call_count, 0)
+
+
 class UriToPathTest(unittest.TestCase):
     """Session URIs must render the same on every host OS (see Windows CI)."""
 

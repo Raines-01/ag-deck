@@ -59,6 +59,11 @@ def _uri_to_path(uri: str) -> str:
     return raw
 
 
+#: cid -> (stepCount, timestamp, activity text)；步数不变时复用，避免重复拉步骤
+_ACTIVITY_CACHE: Dict[str, Tuple[int, float, str]] = {}
+_ACTIVITY_TTL = 30.0
+
+
 def list_sessions(include_archived: bool = True, activity: bool = False) -> List[Dict[str, Any]]:
     data = rpc("GetAllCascadeTrajectories", {"excludeSubtrajectories": True})
     summaries = data.get("trajectorySummaries") or {}
@@ -90,20 +95,34 @@ def list_sessions(include_archived: bool = True, activity: bool = False) -> List
     out.sort(key=lambda x: x.get("updatedAt") or "", reverse=True)
 
     if activity:
-        # 给正在运行的会话补一句"现在在干什么"，让侧边栏直接可读
+        # 给正在运行的会话补一句"现在在干什么"，让侧边栏直接可读。
+        # 每步之间可能相隔几秒，轮询很密；步数没变时直接复用上次的结果，
+        # 避免每 2 秒重复拉 40 步（后台任务期间步数本来就不动）。
         for s in out:
             if not s["running"]:
+                continue
+            cached = _ACTIVITY_CACHE.get(s["id"])
+            if cached and cached[0] == s["stepCount"] and time.time() - cached[1] < _ACTIVITY_TTL:
+                s["activity"] = cached[2]
                 continue
             try:
                 offset = max(0, s["stepCount"] - 40)
                 steps = get_steps(s["id"], offset, timeout=8)
                 if steps:
                     events = normalize_steps(steps, offset)
-                    s["activity"] = build_progress(events, s["status"], s["stepCount"])["currentAction"]
+                    text = build_progress(events, s["status"], s["stepCount"])["currentAction"]
                 else:
-                    s["activity"] = "正在工作…"
+                    text = "正在工作…"
             except Exception:
-                s["activity"] = "正在工作…"
+                text = "正在工作…"
+            s["activity"] = text
+            _ACTIVITY_CACHE[s["id"]] = (s["stepCount"], time.time(), text)
+
+        # 会话消失或跑完了就别留着了
+        alive = {x["id"] for x in out if x["running"]}
+        for cid in list(_ACTIVITY_CACHE):
+            if cid not in alive:
+                _ACTIVITY_CACHE.pop(cid, None)
 
     return out
 
